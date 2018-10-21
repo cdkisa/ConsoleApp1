@@ -12,87 +12,94 @@ namespace ConsoleApp1
 
         static void Main(string[] args)
         {
-            System.Diagnostics.Debug.WriteLine(Guid.NewGuid().ToString());
+            WriteHeading("Using Cipher");
+            UsingCipher();
+            WriteEnding();
 
-            //WriteHeading("Using Cipher");
-            //UsingCipher();
-            //WriteEnding();
+            WriteHeading("Using Hash");
+            UsingHash();
+            WriteEnding();
 
-            //WriteHeading("Using Hash");
-            //UsingHash();
-            //WriteEnding();
-
-            //WriteHeading("Using JWT");
-            //UsingJWT();
-            //WriteEnding();
+            WriteHeading("Using JWT");
+            UsingJWT();
+            WriteEnding();
 
             Console.Read();
         }
         
         static void UsingCipher()
         {
-            string password = appSettings.ImageTokenSuperSecret;
-            string plaintext = DateTime.Now.Ticks.ToString();
-            Console.WriteLine($"Expected decrypted result is: {plaintext}");
-            Console.WriteLine("");
-            Console.WriteLine("Your encrypted string is:");
-            string encryptedstring = Cipher.StringCipher.Encrypt(plaintext, password);
-            Console.WriteLine(encryptedstring);
-            Console.WriteLine("");
+            Cipher.ICipherProvider provider = new Cipher.CipherProvider();
 
-            Console.WriteLine("Your decrypted string is:");
-            string decryptedstring = Cipher.StringCipher.Decrypt(encryptedstring, password);
-            Console.WriteLine(decryptedstring);
+            var securedValue = provider.Create(ImageName, appSettings.SuperSecret, 1);
 
+            WriteGenerated(securedValue);
+
+            System.Threading.Thread.Sleep(TimeSpan.FromMinutes(TimeToLive + 1));
+
+            Cipher.ICipherValidator validator = new Cipher.CipherValidator();
+
+            var validationResult = validator.Validate(securedValue, appSettings.SuperSecret);
+
+            WriteValidationResult(validationResult);
         }
 
         public static void UsingHash()
         {
-            Hashing.IExpiringUrlProvider hashProvider = new Hashing.ExpiringUrlProvider();
+            Hashing.IExpiringUrlProvider provider = new Hashing.ExpiringUrlProvider();
 
-            var urlWithHash = hashProvider.Create(URL, appSettings.ImageTokenSuperSecret, TimeToLive);
+            var urlWithHash = provider.Create(URL, appSettings.SuperSecret, TimeToLive);
 
             WriteGenerated(urlWithHash);
                         
             System.Threading.Thread.Sleep(TimeSpan.FromMinutes(TimeToLive + 1));
 
-            Hashing.IExpiringUrlValidator hashValidator = new Hashing.ExpiringUrlValidator();
-            IValidationResult validationResult = hashValidator.Validate(urlWithHash, appSettings.ImageTokenSuperSecret);
+            Hashing.IExpiringUrlValidator validator = new Hashing.ExpiringUrlValidator();
 
-            if (validationResult.Status == ValidationResultStatuses.Valid)
-            {
-                Console.WriteLine("SUCCESS!");
-            }
-            else
-            {
-                Console.Write("FAIL: ");
-                Console.WriteLine(validationResult.ErrorMessage);
-            }
+            var validationResult = validator.Validate(urlWithHash, appSettings.SuperSecret);
+
+            WriteValidationResult(validationResult);
         }
 
         public static void UsingJWT()
         { 
-            Tokens.ISimpleTokenProvider tokenProvider = new Tokens.SimpleTokenProvider();
+            Tokens.ISimpleTokenProvider provider = new Tokens.SimpleTokenProvider();
 
-            var tokenString = tokenProvider.Create(ImageName, appSettings.ImageTokenSuperSecret, TimeToLive);
+            var tokenString = provider.Create(ImageName, appSettings.SuperSecret, TimeToLive);
 
             WriteGenerated(tokenString);
             
             System.Threading.Thread.Sleep(TimeSpan.FromMinutes(TimeToLive + 1));
 
-            Tokens.ISimpleTokenValidator tokenValidator = new Tokens.SimpleTokenValidator();
-            IValidationResult validationResult = tokenValidator.Validate(appSettings.ImageTokenSuperSecret, tokenString, TimeToLive);
-                        
-            if (validationResult.Status == Common.ValidationResultStatuses.Valid)
+            Tokens.ISimpleTokenValidator validator = new Tokens.SimpleTokenValidator();
+
+            var validationResult = validator.Validate(tokenString, appSettings.SuperSecret, TimeToLive);
+
+            WriteValidationResult(validationResult);
+        }
+
+        #region Console 
+        
+        static void WriteValidationResult(IValidationResult validationResult)
+        {
+            switch (validationResult.Status)
             {
-                Console.Write("SUCCESS: ");
-                Console.WriteLine(validationResult.Value);
+                case ValidationResultStatuses.Valid:
+                    Console.Write("SUCCESS: ");
+                    Console.WriteLine(validationResult.Value);
+                    break;
+                case ValidationResultStatuses.Error:
+                    Console.Write("ERROR: ");
+                    Console.WriteLine(validationResult.ErrorMessage);
+                    break;
+                case ValidationResultStatuses.Expired:
+                    Console.Write("EXPIRED: ");
+                    Console.WriteLine(validationResult.ErrorMessage);
+                    break;
+                default:
+                    Console.Write("UNKNOWN: ");
+                    break;
             }
-            else
-            {
-                Console.Write("FAIL: ");
-                Console.WriteLine(validationResult.ErrorMessage);
-            }            
         }
 
         static void WriteHeading(string heading)
@@ -105,7 +112,6 @@ namespace ConsoleApp1
 
         static void WriteEnding()
         {
-            Console.WriteLine("");
             Console.WriteLine("****************************************");
             Console.WriteLine("");
             Console.WriteLine("");
@@ -120,5 +126,7 @@ namespace ConsoleApp1
             Console.WriteLine("");
             Console.WriteLine("VALIDATED URL:");
         }
+
+        #endregion
     }
 }

@@ -9,7 +9,7 @@ namespace ConsoleApp1.Tokens
 {
     public class SimpleTokenValidator : ISimpleTokenValidator
     {
-        private static ClaimsPrincipal GetPrincipal(string secret, string token, int timeToLiveInMinutes)
+        private static ClaimsPrincipal GetPrincipal(string token, string salt, int timeToLiveInMinutes)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var jwtToken = (JwtSecurityToken)tokenHandler.ReadToken(token);
@@ -17,7 +17,7 @@ namespace ConsoleApp1.Tokens
             if (jwtToken == null)
                 return null;
 
-            var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
+            var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(salt));
 
             var parameters = new TokenValidationParameters()
             {
@@ -30,11 +30,11 @@ namespace ConsoleApp1.Tokens
             return tokenValidationResult;
         }
 
-        public IValidationResult Validate(string secret, string token, int timeToLiveInMinutes = 5)
+        public IValidationResult Validate(string value, string salt, int timeToLiveInMinutes = 5)
         {
             try
             {
-                var principal = GetPrincipal(secret, token, timeToLiveInMinutes);
+                var principal = GetPrincipal(value, salt, timeToLiveInMinutes);
                 var identity = (ClaimsIdentity)principal.Identity;
                 var nameClaim = identity.FindFirst(ClaimTypes.Name);
 

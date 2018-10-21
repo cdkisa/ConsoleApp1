@@ -2,6 +2,6 @@
 {
     internal interface IAppSettings
     {
-        string ImageTokenSuperSecret { get; }
+        string SuperSecret { get; }
     }
 }

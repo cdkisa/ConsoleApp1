@@ -6,6 +6,6 @@
         {
             return System.Configuration.ConfigurationManager.AppSettings[key];
         }
-        public string ImageTokenSuperSecret => Get("ImageTokenSuperSecret");
+        public string SuperSecret => Get("SuperSecret");
     }
 }
