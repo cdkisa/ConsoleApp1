@@ -16,12 +16,24 @@ namespace ConsoleApp1
             UsingCipher();
             WriteEnding();
 
+            WriteHeading("Using Cipher With Expiry");
+            UsingCipherWithExpiry();
+            WriteEnding();
+
             WriteHeading("Using Hash");
             UsingHash();
             WriteEnding();
 
+            WriteHeading("Using Hash With Expiry");
+            UsingHashWithExpiry();
+            WriteEnding();
+
             WriteHeading("Using JWT");
             UsingJWT();
+            WriteEnding();
+
+            WriteHeading("Using JWT With Expiry");
+            UsingJWTWithExpiry();
             WriteEnding();
 
             Console.Read();
@@ -31,11 +43,30 @@ namespace ConsoleApp1
         {
             Cipher.ICipherProvider provider = new Cipher.CipherProvider();
 
-            var securedValue = provider.Create(ImageName, appSettings.SuperSecret, 1);
+            var securedValue = provider.Create(ImageName, appSettings.SuperSecret, TimeToLive);
+
+            Console.WriteLine($"SECURED VALUE: {ImageName}");
 
             WriteGenerated(securedValue);
 
-            System.Threading.Thread.Sleep(TimeSpan.FromMinutes(TimeToLive + 1));
+            Cipher.ICipherValidator validator = new Cipher.CipherValidator();
+
+            var validationResult = validator.Validate(securedValue, appSettings.SuperSecret);
+
+            WriteValidationResult(validationResult);
+        }
+
+        static void UsingCipherWithExpiry()
+        {
+            Cipher.ICipherProvider provider = new Cipher.CipherProvider();
+
+            var securedValue = provider.Create(ImageName, appSettings.SuperSecret, TimeToLive);
+
+            Console.WriteLine($"SECURED VALUE: {ImageName}");
+
+            WriteGenerated(securedValue);
+
+            NapTime(1);
 
             Cipher.ICipherValidator validator = new Cipher.CipherValidator();
 
@@ -48,38 +79,81 @@ namespace ConsoleApp1
         {
             Hashing.IExpiringUrlProvider provider = new Hashing.ExpiringUrlProvider();
 
-            var urlWithHash = provider.Create(URL, appSettings.SuperSecret, TimeToLive);
+            var securedValue = provider.Create(URL, appSettings.SuperSecret, TimeToLive);
 
-            WriteGenerated(urlWithHash);
-                        
-            System.Threading.Thread.Sleep(TimeSpan.FromMinutes(TimeToLive + 1));
+            Console.WriteLine($"SECURED VALUE: {ImageName}");
+
+            WriteGenerated(securedValue);
+            
+            Hashing.IExpiringUrlValidator validator = new Hashing.ExpiringUrlValidator();
+
+            var validationResult = validator.Validate(securedValue, appSettings.SuperSecret);
+
+            WriteValidationResult(validationResult);
+        }
+
+        public static void UsingHashWithExpiry()
+        {
+            Hashing.IExpiringUrlProvider provider = new Hashing.ExpiringUrlProvider();
+
+            var securedValue = provider.Create(URL, appSettings.SuperSecret, TimeToLive);
+
+            Console.WriteLine($"SECURED VALUE: {URL}");
+
+            WriteGenerated(securedValue);
+
+            NapTime(1);
 
             Hashing.IExpiringUrlValidator validator = new Hashing.ExpiringUrlValidator();
 
-            var validationResult = validator.Validate(urlWithHash, appSettings.SuperSecret);
+            var validationResult = validator.Validate(securedValue, appSettings.SuperSecret);
 
             WriteValidationResult(validationResult);
         }
 
         public static void UsingJWT()
+        {
+            Tokens.ISimpleTokenProvider provider = new Tokens.SimpleTokenProvider();
+
+            var securedValue = provider.Create(ImageName, appSettings.SuperSecret, TimeToLive);
+
+            Console.WriteLine($"SECURED VALUE: {ImageName}");
+
+            WriteGenerated(securedValue);
+            
+            Tokens.ISimpleTokenValidator validator = new Tokens.SimpleTokenValidator();
+
+            var validationResult = validator.Validate(securedValue, appSettings.SuperSecret);
+
+            WriteValidationResult(validationResult);
+        }
+
+        public static void UsingJWTWithExpiry()
         { 
             Tokens.ISimpleTokenProvider provider = new Tokens.SimpleTokenProvider();
 
-            var tokenString = provider.Create(ImageName, appSettings.SuperSecret, TimeToLive);
+            var securedValue = provider.Create(ImageName, appSettings.SuperSecret, TimeToLive);
 
-            WriteGenerated(tokenString);
-            
-            System.Threading.Thread.Sleep(TimeSpan.FromMinutes(TimeToLive + 1));
+            Console.WriteLine($"SECURED VALUE: {ImageName}");
+
+            WriteGenerated(securedValue);
+
+            NapTime(1);
 
             Tokens.ISimpleTokenValidator validator = new Tokens.SimpleTokenValidator();
 
-            var validationResult = validator.Validate(tokenString, appSettings.SuperSecret, TimeToLive);
+            var validationResult = validator.Validate(securedValue, appSettings.SuperSecret);
 
             WriteValidationResult(validationResult);
         }
 
         #region Console 
         
+        static void NapTime(int howLong)
+        {
+            System.Threading.Thread.Sleep(TimeSpan.FromMinutes(TimeToLive + howLong));
+        }
+
         static void WriteValidationResult(IValidationResult validationResult)
         {
             switch (validationResult.Status)
@@ -119,12 +193,12 @@ namespace ConsoleApp1
 
         static void WriteGenerated(string generated)
         {
-            Console.WriteLine("GENERATED URL:");
+            Console.WriteLine("GENERATED VALUE:");
             Console.WriteLine(generated);
             Console.WriteLine("");
             Console.WriteLine("========================================");
             Console.WriteLine("");
-            Console.WriteLine("VALIDATED URL:");
+            Console.WriteLine("VALIDATION RESULTS:");
         }
 
         #endregion

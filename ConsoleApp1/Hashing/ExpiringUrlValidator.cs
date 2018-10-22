@@ -31,7 +31,7 @@ namespace ConsoleApp1.Hashing
 
                 if (!expiry.IsExpired()) return ValidationResult.Success("");
 
-                return ValidationResult.Expired("Url has expired");
+                return ValidationResult.Expired("Expired");
 
             }
             catch (Exception ex)

@@ -9,7 +9,7 @@ namespace ConsoleApp1.Tokens
 {
     public class SimpleTokenValidator : ISimpleTokenValidator
     {
-        private static ClaimsPrincipal GetPrincipal(string token, string salt, int timeToLiveInMinutes)
+        private static ClaimsPrincipal GetPrincipal(string token, string salt)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var jwtToken = (JwtSecurityToken)tokenHandler.ReadToken(token);
@@ -22,7 +22,7 @@ namespace ConsoleApp1.Tokens
             var parameters = new TokenValidationParameters()
             {
                 IssuerSigningKey = signingKey, 
-                ClockSkew = TimeSpan.FromMinutes(timeToLiveInMinutes)
+                ClockSkew = TimeSpan.FromMinutes(1)
             };
 
             var tokenValidationResult = tokenHandler.ValidateToken(token, parameters, out SecurityToken validatedToken);
@@ -30,11 +30,11 @@ namespace ConsoleApp1.Tokens
             return tokenValidationResult;
         }
 
-        public IValidationResult Validate(string value, string salt, int timeToLiveInMinutes = 5)
+        public IValidationResult Validate(string value, string salt)
         {
             try
             {
-                var principal = GetPrincipal(value, salt, timeToLiveInMinutes);
+                var principal = GetPrincipal(value, salt);
                 var identity = (ClaimsIdentity)principal.Identity;
                 var nameClaim = identity.FindFirst(ClaimTypes.Name);
 
@@ -42,7 +42,7 @@ namespace ConsoleApp1.Tokens
             }
             catch(SecurityTokenExpiredException stee)
             {
-                return ValidationResult.Expired(stee.Message);
+                return ValidationResult.Expired("Expired");
             }
             catch (Exception ex)
             {

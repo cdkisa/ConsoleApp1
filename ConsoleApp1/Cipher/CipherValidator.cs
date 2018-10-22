@@ -11,9 +11,9 @@ namespace ConsoleApp1.Cipher
             {
                 var decryptedResult = StringCipher.Decrypt(cipher, salt);
                 var values = decryptedResult.Split(Constants.ValueSeparator.ToCharArray());
-                var expiry = long.Parse(values[0]);
-                var value = values[1];
-
+                var value = values[0];
+                var expiry = long.Parse(values[1]);
+                
                 if (!expiry.IsExpired()) return ValidationResult.Success(value);
 
                 return ValidationResult.Expired("Expired");
